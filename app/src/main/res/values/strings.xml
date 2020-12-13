@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">TabataApplication</string>
+    <string name="create_new_sequence">Create new sequence</string>
+    <string name="tabata_timer">Tabata timer</string>
+    <string name="pause">pause</string>
+    <string name="stop">stop</string>
+    <string name="start">start</string>
+    <string name="example_time">10:00</string>
+    <string name="previous">previous</string>
+    <string name="next">next</string>
+    <string name="action_image">actionImage</string>
+    <string name="create_new_phase">Create new phase</string>
+    <string name="preparation">preparation</string>
+    <string name="relax">relax</string>
+    <string name="relax_between_sets">relax between sets</string>
+    <string name="edit_image">edit_image</string>
+    <string name="add_some_description">Add some description</string>
+    <string name="increase">increase</string>
+    <string name="decrease">decrease</string>
+    <string name="create">Create</string>
+    <string name="add_sets">add sets</string>
+    <string name="edit_title">edit title</string>
+    <string name="choose_colors">choose colors</string>
+</resources>
