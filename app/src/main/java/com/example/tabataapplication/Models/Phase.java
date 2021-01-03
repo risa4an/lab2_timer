@@ -11,24 +11,24 @@ public class Phase {
     private int time;
     private String description;
     private Drawable actionImage;
-    private int setsAmount;
+    //private int setsAmount;
 
-    public Phase(int id_sequence, Action actionName, int time, String description, int setsAmount) {
+    public Phase(int id_sequence, Action actionName, Drawable actionImage, int time, String description) {
         this.id_sequence = id_sequence;
         this.actionName = actionName;
+        this.actionImage = actionImage;
         this.time = time;
         this.description = description;
-        this.setsAmount = setsAmount;
+        //this.setsAmount = setsAmount;
     }
 
-    public Phase(int id, int id_sequence, Action actionName, int time, String description, Drawable actionImage, int setsAmount) {
+    public Phase(int id, int id_sequence, Action actionName, int time, String description, Drawable actionImage) {
         this.id = id;
         this.id_sequence = id_sequence;
         this.actionName = actionName;
         this.time = time;
         this.description = description;
         this.actionImage = actionImage;
-        this.setsAmount = setsAmount;
     }
 
     public int getId() {
@@ -45,14 +45,6 @@ public class Phase {
 
     public void setId_sequence(int id_sequence) {
         this.id_sequence = id_sequence;
-    }
-
-    public void setSetsAmount(int setsAmount) {
-        this.setsAmount = setsAmount;
-    }
-
-    public int getSetsAmount() {
-        return setsAmount;
     }
 
     public void setActionImage(Drawable actionImage) {

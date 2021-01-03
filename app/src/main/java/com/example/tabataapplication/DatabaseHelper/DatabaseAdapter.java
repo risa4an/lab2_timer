@@ -40,8 +40,8 @@ public class DatabaseAdapter {
     private Cursor getAllEntries(String tableName) {
         Cursor cursor;
         String[] phase_columns = new String[]{DatabaseHelper.PHASE_ID, DatabaseHelper.FK_SEQUENCE_ID,
-                DatabaseHelper.ACTION_NAME, DatabaseHelper.TIME, DatabaseHelper.DESCRIPTION, DatabaseHelper.SETS_AMOUNT};
-        String[] sequence_columns = new String[]{DatabaseHelper.SEQUENCE_ID, DatabaseHelper.TITLE, DatabaseHelper.COLOUR};
+                DatabaseHelper.ACTION_NAME, DatabaseHelper.TIME, DatabaseHelper.DESCRIPTION};
+        String[] sequence_columns = new String[]{DatabaseHelper.SEQUENCE_ID, DatabaseHelper.TITLE, DatabaseHelper.SETS_AMOUNT, DatabaseHelper.COLOUR};
         switch (tableName) {
             case "phases":
                 cursor = database.query(DatabaseHelper.PHASES_TABLE, phase_columns,
@@ -66,7 +66,8 @@ public class DatabaseAdapter {
                 int id = cursor.getInt(cursor.getColumnIndex(DatabaseHelper.SEQUENCE_ID));
                 String title = cursor.getString(cursor.getColumnIndex(DatabaseHelper.TITLE));
                 int colour = cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COLOUR));
-                sequences.add(new Sequence(id, title, colour));
+                int setsAmount = cursor.getInt(cursor.getColumnIndex(DatabaseHelper.SETS_AMOUNT));
+                sequences.add(new Sequence(id, title, colour, setsAmount));
             }
             while (cursor.moveToNext());
         }
@@ -85,9 +86,8 @@ public class DatabaseAdapter {
                 String actionName = cursor.getString(cursor.getColumnIndex(DatabaseHelper.ACTION_NAME));
                 int time = cursor.getInt(cursor.getColumnIndex(DatabaseHelper.TIME));
                 String description = cursor.getString(cursor.getColumnIndex(DatabaseHelper.DESCRIPTION));
-                int setsAmount = cursor.getInt(cursor.getColumnIndex(DatabaseHelper.SETS_AMOUNT));
                 Drawable actionImage = chooseImage(actionName);
-                phases.add(new Phase(id, id_sequence, Phase.stringToEnumValue(actionName), time, description, actionImage, setsAmount));
+                phases.add(new Phase(id, id_sequence, Phase.stringToEnumValue(actionName), time, description, actionImage));
             }
             while (cursor.moveToNext());
         }
@@ -99,7 +99,7 @@ public class DatabaseAdapter {
     public List<Phase> getPhasesOfSequence(long idSeq) {
         ArrayList<Phase> phases = new ArrayList<>();
         String[] columns = new String[]{DatabaseHelper.PHASE_ID, DatabaseHelper.FK_SEQUENCE_ID,
-                DatabaseHelper.ACTION_NAME, DatabaseHelper.TIME, DatabaseHelper.DESCRIPTION, DatabaseHelper.SETS_AMOUNT};
+                DatabaseHelper.ACTION_NAME, DatabaseHelper.TIME, DatabaseHelper.DESCRIPTION};
         String selection = DatabaseHelper.FK_SEQUENCE_ID + " == ?";
         String[] selectionArgs = new String[]{String.valueOf(idSeq)};
         Cursor cursor = database.query(DatabaseHelper.PHASES_TABLE, columns, selection, selectionArgs, null, null, null);
@@ -110,9 +110,8 @@ public class DatabaseAdapter {
                 String actionName = cursor.getString(cursor.getColumnIndex(DatabaseHelper.ACTION_NAME));
                 int time = cursor.getInt(cursor.getColumnIndex(DatabaseHelper.TIME));
                 String description = cursor.getString(cursor.getColumnIndex(DatabaseHelper.DESCRIPTION));
-                int setsAmount = cursor.getInt(cursor.getColumnIndex(DatabaseHelper.SETS_AMOUNT));
                 Drawable actionImage = chooseImage(actionName);
-                phases.add(new Phase(id, id_sequence, Phase.stringToEnumValue(actionName), time, description, actionImage, setsAmount));
+                phases.add(new Phase(id, id_sequence, Phase.stringToEnumValue(actionName), time, description, actionImage));
             }
             while (cursor.moveToNext());
         }
@@ -158,7 +157,22 @@ public class DatabaseAdapter {
         if (cursor.moveToFirst()) {
             String title = cursor.getString(cursor.getColumnIndex(DatabaseHelper.TITLE));
             int colour = cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COLOUR));
-            sequence = new Sequence(id, title, colour);
+            int setsAmount = cursor.getInt(cursor.getColumnIndex(DatabaseHelper.SETS_AMOUNT));
+            sequence = new Sequence(id, title, colour, setsAmount);
+        }
+        cursor.close();
+        return sequence;
+    }
+
+    public Sequence getSequence(String title) {
+        Sequence sequence = null;
+        String query = String.format("SELECT * FROM %s WHERE %s=?", DatabaseHelper.SEQUENCE_TABLE, DatabaseHelper.TITLE);
+        Cursor cursor = database.rawQuery(query, new String[]{String.valueOf(title)});
+        if (cursor.moveToFirst()) {
+            int id = cursor.getInt(cursor.getColumnIndex(DatabaseHelper.SEQUENCE_ID));
+            int colour = cursor.getInt(cursor.getColumnIndex(DatabaseHelper.COLOUR));
+            int setsAmount = cursor.getInt(cursor.getColumnIndex(DatabaseHelper.SETS_AMOUNT));
+            sequence = new Sequence(id, title, colour, setsAmount);
         }
         cursor.close();
         return sequence;
@@ -173,9 +187,8 @@ public class DatabaseAdapter {
             String actionName = cursor.getString(cursor.getColumnIndex(DatabaseHelper.ACTION_NAME));
             int time = cursor.getInt(cursor.getColumnIndex(DatabaseHelper.TIME));
             String description = cursor.getString(cursor.getColumnIndex(DatabaseHelper.DESCRIPTION));
-            int setsAmount = cursor.getInt(cursor.getColumnIndex(DatabaseHelper.SETS_AMOUNT));
             Drawable actionImage = chooseImage(actionName);
-            phase = new Phase(id, id_sequence, Phase.stringToEnumValue(actionName), time, description, actionImage, setsAmount);
+            phase = new Phase(id, id_sequence, Phase.stringToEnumValue(actionName), time, description, actionImage);
         }
         cursor.close();
         return phase;
@@ -186,6 +199,7 @@ public class DatabaseAdapter {
         ContentValues cv = new ContentValues();
         cv.put(DatabaseHelper.TITLE, sequence.getTitle());
         cv.put(DatabaseHelper.COLOUR, sequence.getColour());
+        cv.put(DatabaseHelper.SETS_AMOUNT, sequence.getSetsAmount());
 
         return database.insert(DatabaseHelper.SEQUENCE_TABLE, null, cv);
     }
@@ -197,7 +211,6 @@ public class DatabaseAdapter {
         cv.put(DatabaseHelper.ACTION_NAME, phase.getActionName());
         cv.put(DatabaseHelper.TIME, phase.getTime());
         cv.put(DatabaseHelper.DESCRIPTION, phase.getDescription());
-        cv.put(DatabaseHelper.SETS_AMOUNT, phase.getSetsAmount());
 
         return database.insert(DatabaseHelper.PHASES_TABLE, null, cv);
     }
@@ -217,26 +230,22 @@ public class DatabaseAdapter {
     }
 
     public long updateSequence(Sequence sequence) {
-
-        String whereClause = DatabaseHelper.SEQUENCE_TABLE + "=" + String.valueOf(sequence.getId());
         ContentValues cv = new ContentValues();
         cv.put(DatabaseHelper.TITLE, sequence.getTitle());
         cv.put(DatabaseHelper.COLOUR, sequence.getColour());
-        return database.update(DatabaseHelper.SEQUENCE_TABLE, cv, whereClause, null);
+        cv.put(DatabaseHelper.SETS_AMOUNT, sequence.getSetsAmount());
+
+        return database.update(DatabaseHelper.SEQUENCE_TABLE, cv, DatabaseHelper.SEQUENCE_ID + " = ?", new String[]{String.valueOf(sequence.getId())});
     }
 
     public long updatePhase(Phase phase) {
-
-        String whereClause = DatabaseHelper.PHASES_TABLE + "=" + String.valueOf(phase.getId());
         ContentValues cv = new ContentValues();
-
         cv.put(DatabaseHelper.FK_SEQUENCE_ID, phase.getId_sequence());
         cv.put(DatabaseHelper.ACTION_NAME, phase.getActionName());
         cv.put(DatabaseHelper.TIME, phase.getTime());
         cv.put(DatabaseHelper.DESCRIPTION, phase.getDescription());
-        cv.put(DatabaseHelper.SETS_AMOUNT, phase.getSetsAmount());
 
-        return database.update(DatabaseHelper.PHASES_TABLE, cv, whereClause, null);
+        return database.update(DatabaseHelper.PHASES_TABLE, cv, DatabaseHelper.PHASE_ID + " = ?", new String[]{String.valueOf(phase.getId())});
     }
 
     public void deleteAll() {

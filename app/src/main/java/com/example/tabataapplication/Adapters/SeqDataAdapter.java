@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 
 
 import androidx.annotation.NonNull;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.tabataapplication.DatabaseHelper.DatabaseAdapter;
@@ -47,12 +48,15 @@ public class SeqDataAdapter extends RecyclerView.Adapter<SeqViewHolder>
         final Sequence sequence = sequences.get(position);
         holder.seqTitle.setText(sequence.getTitle());
         holder.seqItemLayout.setBackgroundColor(sequence.getColour());
-        holder.seqItemLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(inflater.getContext(), TimerActivity.class);
-                inflater.getContext().startActivity(intent);
-            }
+        holder.seqItemLayout.setOnClickListener(v -> {
+            Intent intent = new Intent(inflater.getContext(), TimerActivity.class);
+            intent.putExtra("idSeq", sequence.getId());
+            inflater.getContext().startActivity(intent);
+        });
+        holder.fabEdit.setOnClickListener(v -> {
+            Intent intent = new Intent(inflater.getContext(), EditActivity.class);
+            intent.putExtra("idSeq", sequence.getId());
+            inflater.getContext().startActivity(intent);
         });
     }
 
@@ -78,7 +82,11 @@ public class SeqDataAdapter extends RecyclerView.Adapter<SeqViewHolder>
 
     @Override
     public void onItemDismiss(int position) {
+        final Sequence sequence = sequences.get(position);
         sequences.remove(position);
+        Intent intent = new Intent("sequence");
+        intent.putExtra("sequence-id", sequence.getId());
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
         notifyItemRemoved(position);
     }
 }
